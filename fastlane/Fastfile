@@ -1,0 +1,164 @@
+# Customise this file, documentation can be found here:
+# https://github.com/KrauseFx/fastlane/tree/master/docs
+# All available actions: https://github.com/KrauseFx/fastlane/blob/master/docs/Actions.md
+# can also be listed using the `fastlane actions` command
+
+# Change the syntax highlighting to Ruby
+# All lines starting with a # are ignored when running `fastlane`
+
+# By default, fastlane will send which actions are used
+# No personal data is shared, more information on https://github.com/fastlane/enhancer
+# Uncomment the following line to opt out
+# opt_out_usage
+
+# If you want to automatically update fastlane if a new version is available:
+# update_fastlane
+
+# This is the minimum version number required.
+# Update this, if you use features of a newer version
+fastlane_version "1.49.0"
+
+default_platform :ios
+
+platform :mac do
+
+  desc "Create all assets"
+  lane :assets do
+    sh "rm -rf ../res/ios"
+    sh "mkdir -p ../res/ios/AppIcon && mkdir -p ../res/ios/SplashScreen"
+
+    sh "rm -rf ../res/android && mkdir -p ../res/android"
+
+    icons
+    splash
+  end
+
+  desc "Create app icons"
+  lane :icons do
+    {
+      'android' => {
+        'drawable-ldpi' => 36,
+        'drawable-mdpi' => 48,
+        'drawable-hdpi' => 72,
+        'drawable-xhdpi' => 96,
+        'drawable-xxhdpi' => 144,
+        'drawable-xxxhdpi' => 512
+      },
+      'ios' => {
+        'appicon' => 57,
+        'appicon@2x' => 114,
+        'appicon-Small' => 29,
+        'appicon-Small@2x' => 58,
+        'appicon-29' => 29,
+        'appicon-29@2x' => 58,
+        'appicon-20' => 20,
+        'appicon-20@2x' => 40,
+        'appicon-iPad-20@2x' => 40,
+        'appicon-20@3x' => 60,
+        'appicon-60@2x' => 120,
+        'appicon-60@3x' => 180,
+        'appicon-76' => 76,
+        'appicon-76@2x' => 152,
+        'appicon-83.5@2x' => 167,
+        'appicon-Small-40' => 40,
+        'appicon-Small-40@2x' => 80,
+        'appicon-Small-40@3x' => 120,
+        'appicon-Small@3x' => 87, 
+        'iTunesArtwork@2x' => 1024,
+        'appicon-40@2x' => 80,
+      }
+    }.each do |pl,images|
+      images.each do |name, size|
+        
+        imageOutput = "../res/#{pl}/AppIcon/#{name}.png"
+        if pl === 'android' 
+          sh "mkdir -p ../res/#{pl}/#{name}"
+          imageOutput = "../res/#{pl}/#{name}/icon.png" 
+        end
+
+        sh "sips -Z #{size} ../res/icon.png --out #{imageOutput}"
+      end
+    end
+  end
+
+
+  desc "Create splashscreens"
+  lane :splash do
+    {
+      'android' => {
+        'drawable-xxxhdpi' => [1280, 1920],
+        'drawable-xxhdpi' => [960, 1600],
+        'drawable-xhdpi' => [720, 1280],
+        'drawable-mdpi' => [320, 480],
+        'drawable-ldpi' => [240, 320],
+        'drawable-hdpi' => [480, 800],
+        'drawable-land-xxxhdpi' => [1920, 1280],
+        'drawable-land-xxhdpi' => [1600, 960],
+        'drawable-land-xhdpi' => [1280, 720],
+        'drawable-land-mdpi' => [480, 320],
+        'drawable-land-ldpi' => [320, 240],
+        'drawable-land-hdpi' => [800, 480]
+      },
+      'ios' => {
+        'Default@2x' => [640, 960],
+        'Default-568h' => [640, 960],
+        'Default-568h@2x' => [640, 1136],
+        'Default-667h@2x' => [750, 1334],
+        'Default-Landscape-736h@3x' => [2208, 1242],
+        'Default-Portrait-736h@3x' => [1242, 2208],
+        'Default-Portrait-2436h@3x' => [1125, 2436],
+        'Default-Landscape-2436h@3x' => [2436, 1125],
+        'Default-Portrait-2688h@3x' => [1242, 2688],
+        'Default-Landscape-2688h@3x' => [2688, 1242],
+        'Default-Portrait-1792h@2x' => [828, 1792],
+        'Default-Landscape-1792h@2x' => [1792, 828],
+        'Default-Landscape' => [1024, 768],
+        'Default-Portrait' => [768, 1024],
+        'Default-Landscape@2x' => [2048, 1536],
+        'Default-Portrait@2x' => [1536, 2048],
+        'Default' => [320, 480],
+        'Default-Retina' => [640, 1136],
+        'Default-Landscape-1024h' => [1024, 748],
+        'Default-Landscape-1024h@2x' => [2048, 1496],
+        'Default-Landscape-iPad' => [1024, 768],
+        'Default-Landscape-iPad@2x' => [2048, 1536],
+        'Default-Portrait-768h' => [768, 1004],
+        'Default-Portrait-768h@2x' => [1536, 2008],
+        'Default-Portrait-iPad' => [768, 1024],
+        'Default-Portrait-iPad@2x' => [1536, 2048],
+      }
+    }.each do |pl,images|
+      images.each do |name, size|
+        imageOutput = "../res/#{pl}/SplashScreen/#{name}.png"
+
+        if pl === 'android' 
+          sh "mkdir -p ../res/#{pl}/#{name}"
+          imageOutput = "../res/#{pl}/#{name}/screen.png" 
+        end
+
+        width = size[0];
+        height = size[1]
+
+        smallestSize = height > width ? width : height
+        biggestSize = height > width ? height : width
+
+        if smallestSize < 1700 
+          resizeSmall = 2000
+          resizeBig = biggestSize * resizeSmall / smallestSize
+
+          if height > width 
+            sh "sips --cropToHeightWidth #{resizeBig} #{resizeSmall} ../res/splash.png --out #{imageOutput}"
+          else
+            sh "sips --cropToHeightWidth #{resizeSmall} #{resizeBig} ../res/splash.png --out #{imageOutput}"
+          end
+
+          sh "sips --resampleHeightWidthMax #{biggestSize} #{imageOutput} --out #{imageOutput}"
+        else 
+          sh "sips --cropToHeightWidth #{size[1]} #{size[0]} ../res/splash.png --out #{imageOutput}"
+        end
+        
+      end
+    end
+  end
+
+end
